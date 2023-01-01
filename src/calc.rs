@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Copy, Clone)]
 enum ExprParts {
     Int(i64),
@@ -9,9 +11,34 @@ enum ExprParts {
 }
 
 impl ExprParts {
-    pub fn(&self) -> bool {
+    pub fn is_op(&self) -> bool {
         match self {
-            ExprParts::AddOp | ExprParts::SubOp | ExprParts::MulOp 
+            ExprParts::AddOp | ExprParts::SubOp | ExprParts::MulOp |
+                ExprParts::DivOp => true,
+            _ => false
+        }
+    }
+
+    pub fn op_prio(&self) -> u8 {
+        match self {
+            ExprParts::SubOp => 1,
+            ExprParts::AddOp => 2,
+            ExprParts::MulOp => 3,
+            ExprParts::DivOp => 4,
+            _ => unreachable!() // should not happen 
+        }
+    }
+}
+
+impl fmt::Display for ExprParts {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ExprParts::Int(i) => write!(f, "{i}"),
+            ExprParts::Double(d) => write!(f, "{d}"),
+            ExprParts::AddOp => write!(f, "+"),
+            ExprParts::SubOp => write!(f, "-"),
+            ExprParts::MulOp => write!(f, "*"),
+            ExprParts::DivOp => write!(f, "/")
         }
     }
 }
@@ -65,9 +92,29 @@ fn find_next(line: &str, from: usize) -> usize {
     line.len()
 }
 
-fn parse(tokens: &Vec<ExprParts>) {
+fn parse(tokens: &Vec<ExprParts>) -> Result<Vec<ExprParts>, String> {
     let mut parsed: Vec<ExprParts> = Vec::with_capacity(tokens.len());
-    for token in tokens.iter() {
+    for i in 0..tokens.len() {
+        if parsed.len() > 2 && parsed.len() % 3 == 0 {
+            for i in 0..parsed.len() {
+                if i % 3 == 0 {
+                    if !tokens[i].is_op() {
+                        return Err(format!("Expected operator but got  {}", tokens[i]));
+                    }
+                }
+            }
+        }
 
+        if tokens[i].is_op() {
+            if parsed.is_empty() {
+                return Err(format!("Insufficient arguments for operator {}", tokens[i]));
+            }
+
+            parsed.insert(0, tokens[i]);
+        }
+
+        parsed.push(tokens[i]);
     }
+
+    Ok(parsed)
 }
