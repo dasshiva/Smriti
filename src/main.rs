@@ -1,6 +1,9 @@
 use std::env;
 
 mod calc;
+mod engine;
+mod expr;
+
 fn main() {
     let mut buf = String::new();
     let mut args: Vec<String> = env::args().collect();
@@ -9,7 +12,7 @@ fn main() {
         buf += &i.trim();
     }
     match calc::calc(&buf) {
-        Ok(..) => {},
-        Err(s) => { eprintln!("{s}"); std::process::exit(1) }
+        Ok(s) => { println!("{s}")},
+        Err(s) => { eprintln!("In expression: {buf}\nError:{s}"); std::process::exit(1) }
     }
 }
